@@ -1,0 +1,4 @@
+auto connect:i:1
+full address:s:
+username:s:Administrator
+password:s:
