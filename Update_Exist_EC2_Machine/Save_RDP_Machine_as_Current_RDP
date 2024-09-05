@@ -1,0 +1,95 @@
+#Change your RDP machine with which is your current EC2 Machine
+#you can simply replace your credentials with .txt files, it will automatically change with your current EC2 Machine.
+#You need to replace your current Keys in crd file
+#please save first your .txt file as for edit your machine details.
+
+import boto3
+import shutil
+file_path = 'crd.txt'
+
+with open(file_path, 'r') as file:
+    for line in file:
+        # Check and extract the values for each key
+        if "region=" in line:
+            region = line.split('=')[1].strip().strip("'")
+        elif "aws_access_key_id" in line:
+            aws_access_key_id = line.split('=')[1].strip().strip('"')
+        elif "aws_secret_access_key" in line:
+            aws_secret_access_key = line.split('=')[1].strip().strip('"')
+
+print(f"aws_access_key_id: {aws_access_key_id}")
+print(f"aws_secret_access_key: {aws_secret_access_key}")
+print(f"region: {region}")
+
+SESSION_TOKEN=''
+
+session = boto3.Session(
+    aws_access_key_id=aws_access_key_id,
+    aws_secret_access_key=aws_secret_access_key,
+    aws_session_token=SESSION_TOKEN,
+    region_name=region
+)
+
+ec2_client = session.client('ec2')
+
+try:
+    instances = ec2_client.describe_instances()['Reservations'][0]['Instances']
+    # print(instances)
+    for instance in instances:
+        # print(instance['InstanceId'], instance['InstanceType'], instance['PublicIpAddress'], )
+        My_instance_IDs=instance['InstanceId'] #This is your Instance ID    
+        My_instance_Types=instance['InstanceType'] #This is your Instance Type
+        My_instance_ID_DNS=instance['PublicDnsName'] #This is the Public DNS IP Address
+        instance_State_Status=instance['State']['Name'] #This is your EC2 Status
+
+        # RD_Name=instance['Name']
+        instance_name = "Unnamed"
+        if 'Tags' in instance:
+            for tag in instance['Tags']:
+                if tag['Key'] == 'Name':
+                    instance_name = tag['Value']
+                    break
+
+        # print(f"Name: {instance_name}") #This is instance name printed
+        # print("this is your status=",instance_State_Status)
+        # print("This is your DNS address=",My_instance_ID_DNS)
+        MY_DNS_IP=str(My_instance_ID_DNS)
+        RDP_Pass=input("Add your EC2 Machine Password=")
+        file_path = "myrdp.txt"
+
+        # Read the file line by line
+        with open(file_path, 'r') as file:
+            lines = file.readlines()
+
+        for line in lines:
+            print(line.strip())
+
+        for i, line in enumerate(lines):
+            if line.startswith('full address:s:'):
+                lines[i] = f'full address:s:{MY_DNS_IP}\n'
+                break
+
+        for i, line in enumerate(lines):
+            if line.startswith('password:s:'):
+                lines[i] = f'password:s:{RDP_Pass}\n'
+                break
+
+        # Write the changes back to the file
+        with open(file_path, 'w') as file:
+            file.writelines(lines)
+
+        print("The 'full address:' line has been updated successfully.")
+
+        #convert your .TXT to .RDP with current name
+        #change the name of rdp file 
+        current_instance_name=str(instance_name)
+
+        new_file_path = file_path.replace('.txt', f'{current_instance_name}.rdp')
+        shutil.copyfile(file_path, new_file_path)
+        print(f"File converted to: {new_file_path}")
+
+except Exception as e:
+    print(f"An error occurred: {e}")
+
+
+
