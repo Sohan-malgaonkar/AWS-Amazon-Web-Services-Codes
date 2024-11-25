@@ -1,0 +1,80 @@
+import boto3
+import zipfile
+import os
+import subprocess
+import requests
+
+# Extract credentials from the file
+email_id = "xyzmyemail.COM"
+password = "myxyzpassofsohan@1111"
+api_key = "AKIA2MNJLJDFJSDLKKJFJKDSJJ"
+api_secret = "qMaARTI8sPO8sdfjDKUoN3U/SDKdLKJflkkjdslkfE"
+
+# Step 2: Connect to AWS using boto3
+ec2 = boto3.client(
+    'ec2',
+    aws_access_key_id=api_key,
+    aws_secret_access_key=api_secret,
+    region_name='ap-south-1'
+)
+
+# Step 3: Find running EC2 instances and get Public IPs
+running_instances = ec2.describe_instances(
+    Filters=[{'Name': 'instance-state-name', 'Values': ['running']}]
+)
+
+public_ip_list = []
+instance_id_list = []
+
+for reservation in running_instances['Reservations']:
+    for instance in reservation['Instances']:
+        public_ip = instance.get('PublicIpAddress')
+        instance_id = instance.get('InstanceId')
+        if public_ip and instance_id:
+            public_ip_list.append(public_ip)
+            instance_id_list.append(instance_id)
+            print(f"Public IP: {public_ip}, Instance ID: {instance_id}")
+
+# Step 4: Download the .zip file to a fixed location (Desktop)
+desktop_path = os.path.expanduser("~/Desktop")
+zip_file_path = os.path.join(desktop_path, "file.zip")
+
+zip_file_url = "http://XYZ.in/XYZsoftwareSystem_V7.0.zip"
+response = requests.get(zip_file_url)
+with open(zip_file_path, 'wb') as file:
+    file.write(response.content)
+print(f"File downloaded to: {zip_file_path}")
+
+how to extract any zip file inside Instace machine by our download link
+# Step 5: Extract the .zip file to a folder on the Desktop
+extracted_folder_path = os.path.join(desktop_path, "extracted_files")
+os.makedirs(extracted_folder_path, exist_ok=True)
+
+with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
+    zip_ref.extractall(extracted_folder_path)
+print(f"File extracted to: {extracted_folder_path}")
+
+# Step 6: Run the executable (xyz.exe) from the extracted folder
+xyz_exe_path = os.path.join(extracted_folder_path, "xyz.exe")
+
+if os.path.exists(xyz_exe_path):
+    subprocess.Popen([xyz_exe_path], shell=True)
+    print("sohan's xyz.exe started.")
+else:
+    print("sohan's xyz.exe not found in the extracted folder.")
+
+# Step 7: Check if xyz.exe is running locally
+def is_process_running(process_name):
+    try:
+        output = subprocess.check_output(["tasklist"], universal_newlines=True)
+        return process_name in output
+    except Exception as e:
+        print("Error checking process:", e)
+        return False
+
+#how to check it's running or not?
+# Step 8: Verify if xyz.exe is running
+if is_process_running("xyz.exe"):
+    print("sohan's xyz.exe is running.")
+else:
+    print("sohan's xyz.exe is not running.")
