@@ -1,0 +1,139 @@
+import pandas as pd
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.service import Service
+import time
+import os
+
+excel_file_path = "aws_accounts.xlsx"  # Path to your Excel file
+df = pd.read_excel(excel_file_path)
+print(df)
+
+# # Path to Chrome and ChromeDriver (same folder)
+# chrome_driver_path = r"C:\Users\sohan\Desktop\aws login\chromedriver-win64\chromedriver.exe"  # Update with your actual path
+# chrome_executable_path = r"chrome-win64\chrome.exe"  # Same folder for Chrome executable
+
+# # Set up the Chrome driver with the correct paths
+# options = webdriver.ChromeOptions()
+# options.binary_location = chrome_executable_path  # Path to Chrome executable
+
+# # Initialize the WebDriver
+# service = Service(chrome_driver_path)
+# driver = webdriver.Chrome( options=options)
+
+chrome_data_path = "C:\\Users\\sohan\\AppData\\Local\\Google\\Chrome\\User Data\\Default"
+options = webdriver.ChromeOptions()
+options.add_argument(f"user-data-dir={chrome_data_path}")
+
+chromedriver_path = "C:\\Users\\sohan\\Desktop\\aws login\\chromedriver.exe"
+service = Service(chromedriver_path)
+
+driver=webdriver.Chrome(service=service,options=options)
+
+def aws_login(client_email, client_password):
+    try:
+        # Open the AWS Sign-In page
+        # driver.get("https://signin.aws.amazon.com/signin")
+        driver.get("https://kite.zerodha.com")
+        
+        
+        # Wait for the page to load
+        time.sleep(6)
+
+        # Enter the email
+        email_field = driver.find_element(By.ID, "resolving_input")
+        email_field.send_keys(client_email)
+
+        # Click the "Next" button
+        next_button = driver.find_element(By.ID, "next_button")
+        next_button.click()
+
+        # Wait for the password field to appear
+        time.sleep(25)
+
+        # Enter the password
+        password_field = driver.find_element(By.ID, "password")
+        password_field.send_keys(client_password)
+
+        # Click the "Sign-In" button
+        signin_button = driver.find_element(By.ID, "signin_button")
+        signin_button.click()
+        time.sleep(20)
+
+        driver.get("https://console.aws.amazon.com/iamv2/home")
+        time.sleep(5)
+
+        # Click on "Users" in the left menu to manage users
+        users_menu = driver.find_element(By.XPATH, "//a[@href='/iamv2/home#/users']")
+        users_menu.click()
+        time.sleep(5)
+
+        # Click on the first user or your specific user
+        user_link = driver.find_element(By.XPATH, "(//a[contains(text(),'YourUserName')])[1]")  # Update with your user name
+        user_link.click()
+        time.sleep(5)
+
+        # Go to the "Security credentials" tab
+        security_credentials_tab = driver.find_element(By.XPATH, "//a[@href='#security-credentials']")
+        security_credentials_tab.click()
+        time.sleep(5)
+
+        # Click on "Create access key"
+        create_access_key_button = driver.find_element(By.XPATH, "//button[text()='Create access key']")
+        create_access_key_button.click()
+        time.sleep(5)
+
+        # Capture the access key and secret key
+        access_key_id = driver.find_element(By.XPATH, "//span[@id='accessKeyId']").text
+        secret_access_key = driver.find_element(By.XPATH, "//span[@id='secretAccessKey']").text
+
+        print(f"Access Key ID: {access_key_id}")
+        print(f"Secret Access Key: {secret_access_key}")
+
+        save_to_file(client_email, access_key_id, secret_access_key)
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+def save_to_file(client_email, access_key_id, secret_access_key):
+# File path to save the keys (you can adjust the path if needed)
+    file_name = f"{client_email}_aws_keys.txt"  # Using email as the file name
+    with open(file_name, 'w') as f:
+        f.write(f"Email: {client_email}\n")
+        f.write(f"Access Key ID: {access_key_id}\n")
+        f.write(f"Secret Access Key: {secret_access_key}\n")
+        print(f"Saved keys for {client_email} to {file_name}")
+
+        for index, row in df.iterrows():
+            client_email = row['Email']
+            client_password = row['Password']
+            
+            print(f"Logging in with {client_email}...")
+            aws_login(client_email, client_password)
+
+# --------------------------------------------------------------------------
+    # finally:
+    #     # Close the browser after completion
+    #     driver.quit()
+# --------------------------------------------------------------------------
+        # # Check if 2FA is required
+        # if "Authentication" in driver.title:  # AWS will show "Authentication" in the title when 2FA is enabled
+        #     print("2FA is enabled. Please enter the verification code.")
+        #     two_fa_code = input("Enter the 2FA code: ")
+
+        #     # Find the 2FA code input field and enter the code
+        #     two_fa_field = driver.find_element(By.ID, "tokenCode")
+        #     two_fa_field.send_keys(two_fa_code)
+
+        #     # Click the "Verify" button
+        #     verify_button = driver.find_element(By.ID, "signInSubmit")
+        #     verify_button.click()
+
+        #     # Wait for the console to load
+        #     time.sleep(2)
+        
+        # else:
+        #     print("2FA is not enabled or not required.")
+
+        # # Optional: Wait for the console to load completely
+        # time.sleep(5)
