@@ -1,0 +1,81 @@
+import boto3
+from logger import logging
+from boto3.session import Session
+from boto3.compat import _warn_deprecated_python
+from botocore.exceptions import NoCredentialsError, PartialCredentialsError, ClientError
+
+#This is Trial Credentials I Will Replace using JSon.
+
+region='ap-south-1'
+aws_access_key_id = "Your API Keys...."
+aws_secret_access_key ="Your API secret Key...................." 
+SESSION_TOKEN=''
+
+# Create a session using the temporary credentials
+session = boto3.Session(
+    aws_access_key_id=aws_access_key_id,
+    aws_secret_access_key=aws_secret_access_key,
+    aws_session_token=SESSION_TOKEN,
+    region_name=region
+)
+
+# Example: Create an EC2 client using this session
+ec2_client = session.client('ec2')
+
+# Now you can use this client to interact with EC2 resources
+# Example: Describe instances
+
+try:
+    instances = ec2_client.describe_instances()['Reservations'][0]['Instances']
+    # print(instances)
+    for instance in instances:
+        # print(instance['InstanceId'], instance['InstanceType'], instance['PublicIpAddress'], )
+        My_instance_IDs=instance['InstanceId'] #This is your Instance ID    
+        My_instance_Types=instance['InstanceType'] #This is your Instance Type
+        # EC2_IP_Address=instance['PublicIpAddress'] #This is the Public DNS IP Address
+        instance_State_Status=instance['State']['Name']
+        print("this is your status=",instance_State_Status)
+
+        # RD_Name=instance['Name']
+        instance_name = "Unnamed"
+        if 'Tags' in instance:
+            for tag in instance['Tags']:
+                if tag['Key'] == 'Name':
+                    instance_name = tag['Value']
+                    break
+        print(f"Name: {instance_name}") #This is instance name printed
+    
+        target_instance_id =My_instance_IDs
+        target_instance_type =My_instance_Types
+
+        if My_instance_IDs == target_instance_id and My_instance_Types == target_instance_type:
+                start_stop_instance=input("select Start for Y and Stop for N=")
+
+                #start The Instance when user will give input "Y"
+
+                if start_stop_instance == 'Y':
+                    if instance_State_Status == 'stopped':
+                        print(f"Starting Instance ID: {My_instance_IDs}, Type: {My_instance_Types}, Name: {instance_name}")
+                        start_response = ec2_client.start_instances(InstanceIds=[My_instance_IDs])
+                        print(f"Start response: {start_response}")
+                    else:
+                        print(f"Instance ID: {My_instance_IDs} is already running.")
+                
+                #Stop The Instance when user will give input "N"
+
+                elif start_stop_instance == 'N':
+                    if instance_State_Status == 'running':
+                        print(f"Stopping Instance ID: {My_instance_IDs}, Type: {My_instance_Types}, Name: {instance_name}")
+                        stop_response = ec2_client.stop_instances(InstanceIds=[My_instance_IDs])
+                        print(f"Stop response: {stop_response}")
+                    else:
+                        print(f"Instance ID: {My_instance_IDs} is already stopped.")
+                        
+                else:
+                    print("Invalid input. Please type 'Y' to start or 'N' to stop the instance.")
+                break
+        else:
+            # Continue outer loop if break was not called
+            continue
+except Exception as e:
+    print(f"Error: {e}")
