@@ -7,8 +7,8 @@ import requests
 # Extract credentials from the file
 email_id = "xyzmyemail.COM"
 password = "myxyzpassofsohan@1111"
-api_key = "AKIA2MNJLJDFJSDLKKJFJKDSJJ"
-api_secret = "qMaARTI8sPO8sdfjDKUoN3U/SDKdLKJflkkjdslkfE"
+api_key = "AKIA2MNlkjkljkljJSDLKKJFJKDSJJ"
+api_secret = "qMaARTI8sPO8sdnjonkjnhjjibSDKdLKJflkkjdslkfE"
 
 # Step 2: Connect to AWS using boto3
 ec2 = boto3.client(
